@@ -1,0 +1,3 @@
+[deps]
+ComodoFerrite = "4ccf3a29-4aa4-4027-a3be-f1f903a96b6c"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
