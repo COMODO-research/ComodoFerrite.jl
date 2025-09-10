@@ -116,3 +116,41 @@ function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron})
 
     return Grid(cells, nodes)
 end
+###########################################################
+###########################################################
+"""
+    get_boundary_points(grid, facets, Faces, Ferrite.Hexahedron)
+    or 
+    get_boundary_points(grid, facets, Faces, Ferrite.Tetrahedron)
+
+function to convert FaceIndex boundary of Ferrite.jl to points for plotting the boundry condition
+"""
+function get_boundary_points(grid, facets, ::Type{Faces}, ::Type{T}) where {
+    T<:Union{Ferrite.Hexahedron,Ferrite.Tetrahedron}
+}
+    facet_points = Point3f[]
+    for facet in facets
+        cell = grid.cells[facet[1]]
+        facet_nodes = Ferrite.facets(cell)[facet[2]]
+        for n in facet_nodes
+            push!(facet_points, Point3f(Ferrite.get_node_coordinate(grid.nodes[n]).data...))
+        end
+    end
+    facet_points = unique(facet_points)
+    return facet_points
+end
+###########################################################
+###########################################################
+"""
+     get_boundary_points(grid, facets, Faces, Ferrite.Hexahedron)
+     or 
+     get_boundary_points(grid, facets, Faces, Ferrite.Tetrahedron)
+
+Convert a set of node indices from a Ferrite grid to 3D point coordinates for plotting.
+"""
+function get_boundary_points(grid, nodeset, ::Type{Nodes}, ::Type{T}) where {
+    T<:Union{Ferrite.Hexahedron, Ferrite.Tetrahedron}
+}
+    nodesset = [Point{3, Float64}(Ferrite.get_node_coordinate(grid.nodes[i]).data...) for i in nodeset]
+    return nodesset
+end
