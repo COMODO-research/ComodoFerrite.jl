@@ -1,14 +1,6 @@
-using Revise
-using Comodo
-using Comodo.GLMakie
-using Comodo.GeometryBasics
-using Comodo.Statistics
-using Ferrite
-using ComodoFerrite
-using Colors
+using Revise , Comodo , Comodo.GLMakie ,Comodo.GeometryBasics , Comodo.Statistics
+using Ferrite, ComodoFerrite , Colors
 
-
-pointSpacing = 2.0
 boxDim = [2,2,2]
 boxEl = [6,6,6] 
 E,V,F,Fb,CFb_type = hexbox(boxDim,boxEl) 
@@ -51,10 +43,10 @@ GLMakie.closeall()
 
 fig = Figure(size = (1200,800))
 
-ax1 = AxisGeom(fig[1, 1], title = "Hex8 mesh", azimuth = -0.1π, elevation = 0.1π)
+ax1 = AxisGeom(fig[1, 1], title = "Hex8 mesh", azimuth = -0.2π, elevation = 0.1π)
 hp1 = meshplot!(ax1, F, V,color=:gray,  strokecolor=:black, strokewidth=3.0, shading =  false, transparency = false)
 
-ax2 = AxisGeom(fig[1, 2], title = "Boundary condition", azimuth = -0.1π, elevation = 0.1π)
+ax2 = AxisGeom(fig[1, 2], title = "Boundary condition", azimuth = -0.2π, elevation = 0.1π)
 hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3),  strokecolor=:black, strokewidth=2.0, shading=true, transparency = true)
  
 ## Visualize boundary condition
