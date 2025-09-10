@@ -4,11 +4,13 @@ authors = ["Aminofa70 <amin.alibakhshi@upm.es> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
+Comodo = "59095408-2761-4f7a-bdc2-044e78630271"
 Ferrite = "c061ca5d-56c9-439f-9c0e-210fe06d3992"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 
 [compat]
+Comodo = "1.0.3"
 Ferrite = "1.1.0"
 GeometryBasics = "0.5.10"
 OrderedCollections = "1.8.1"

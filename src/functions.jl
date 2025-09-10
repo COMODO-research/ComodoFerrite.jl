@@ -80,7 +80,7 @@ end
 
 Convert Hex8 of Comodo.jl to Ferrite.Hexahedron mesh in Ferrite.jl
 """
-function ComodoToFerrite(E, V,Fb, CFb_type, ::Type{Ferrite.Hexahedron})
+function ComodoToFerrite(E, V, Fb, CFb_type,  ::Type{Ferrite.Hexahedron})
 
     cells = [Ferrite.Hexahedron((e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
@@ -102,6 +102,8 @@ function ComodoToFerrite(E, V,Fb, CFb_type, ::Type{Ferrite.Hexahedron})
     
     return Grid(cells, nodes, facetsets = facetsets)
 end
+
+
 ###########################################################
 ###########################################################
 """
@@ -113,7 +115,6 @@ function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron})
 
     cells = [Ferrite.Tetrahedron((e[1], e[2], e[3], e[4])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
-
     return Grid(cells, nodes)
 end
 ###########################################################
@@ -153,4 +154,23 @@ function get_boundary_points(grid, nodeset, ::Type{Nodes}, ::Type{T}) where {
 }
     nodesset = [Point{3, Float64}(Ferrite.get_node_coordinate(grid.nodes[i]).data...) for i in nodeset]
     return nodesset
+end
+###########################################################
+###########################################################
+"""
+
+"""
+function FerriteToComodo(grid, ::Type{Ferrite.Hexahedron})
+     E = Vector{Hex8{Int64}}()
+    for i in eachindex(grid.cells)
+        push!(E , grid.cells[i].nodes)
+    end
+    V = [Point{3,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
+
+    F = element2faces(E)
+
+    F_uni,_,c_uni = gunique(F,return_index=Val(true),return_counts=Val(true),sort_entries=true)
+    Lb = isone.(c_uni)
+    Fb = F_uni[Lb]
+    return E , V, F, Fb
 end
