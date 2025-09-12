@@ -13,36 +13,7 @@ Cbs_V = simplex2vertexdata(Fbs,Cb)
 grid = ComodoToFerrite(E, V,  Ferrite.Tetrahedron)
 addnodeset!(grid, "Fixed_XYZ", x -> x[3] ≈ -2.0) # we add a nodeset to check the boundary condition
 addfacetset!(grid, "traction", x -> x[3] ≈ 2.0)
-# Function to create cell and facet values
-function create_values()
-    order = 1
-    dim = 3
-    ip = Lagrange{RefTetrahedron,order}()^dim
-    qr = QuadratureRule{RefTetrahedron}(2)
-    qr_face = FacetQuadratureRule{RefTetrahedron}(1)
-    cell_values = CellValues(qr, ip)
-    facet_values = FacetValues(qr_face, ip)
-    return cell_values, facet_values
-end
 
-# Function to create a DOF handler
-function create_dofhandler(grid)
-    dh = Ferrite.DofHandler(grid)
-    Ferrite.add!(dh, :u, Ferrite.Lagrange{Ferrite.RefTetrahedron,1}()^3)
-    Ferrite.close!(dh)
-    return dh
-end
-
-# Function to create boundary conditions
-function create_bc(dh, grid)
-    ch = Ferrite.ConstraintHandler(dh)
-    dbc = Dirichlet(:u, getnodeset(grid, "Fixed_XYZ"), (x, t) -> [0.0, 0.0, 0.0], [1,2,3]) ## change it to other (right, top, etc)
-    add!(ch, dbc)
-    Ferrite.close!(ch)
-    return ch
-end
-dh = create_dofhandler(grid)
-ch = create_bc(dh, grid)
 
 ## Visualize mesh 
 GLMakie.closeall()

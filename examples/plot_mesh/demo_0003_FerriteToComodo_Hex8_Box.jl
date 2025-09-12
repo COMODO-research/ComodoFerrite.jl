@@ -7,39 +7,6 @@ left = Ferrite.Vec(0.0, 0.0, 0.0)
 right = Ferrite.Vec(Lx, Ly, Lz)
 grid = generate_grid(Ferrite. Hexahedron, (Nx, Ny, Nz), left, right)
 
-# Function to create cell and facet values
-function create_values()
-    order = 1
-    dim = 3
-    ip = Lagrange{RefHexahedron,order}()^dim
-    qr = QuadratureRule{RefHexahedron}(2)
-    qr_face = FacetQuadratureRule{RefHexahedron}(1)
-    cell_values = CellValues(qr, ip)
-    facet_values = FacetValues(qr_face, ip)
-    return cell_values, facet_values
-end
-
-# Function to create a DOF handler
-function create_dofhandler(grid)
-    dh = Ferrite.DofHandler(grid)
-    Ferrite.add!(dh, :u, Ferrite.Lagrange{Ferrite.RefHexahedron,1}()^3)
-    Ferrite.close!(dh)
-    return dh
-end
-
-# Function to create boundary conditions
-function create_bc(dh, grid)
-    ch = Ferrite.ConstraintHandler(dh)
-    dbc = Dirichlet(:u, getfacetset(grid, "bottom"), (x, t) -> [0.0, 0.0, 0.0], [1,2,3])
-    dbc = Dirichlet(:u, getfacetset(grid, "top"), (x, t) -> [0.0], [1])
-    add!(ch, dbc)
-    Ferrite.close!(ch)
-    return ch
-end
-dh = create_dofhandler(grid)
-ch = create_bc(dh, grid)
-
-
 E , V, F, Fb  = FerriteToComodo(grid, Ferrite.Hexahedron)
 
 ## Visualize mesh 
