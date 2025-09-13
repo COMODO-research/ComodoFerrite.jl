@@ -1,9 +1,5 @@
-try
-    using CairoMakie
-    CairoMakie.activate!()
-catch e
-    @info "CairoMakie not available or failed to activate (ignore if not plotting): $e"
-end
+using GLMakie
+GLMakie.activate!()
 
 using ComodoFerrite
 using Documenter
