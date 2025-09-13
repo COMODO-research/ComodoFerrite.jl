@@ -30,9 +30,6 @@ jobs:
           path: ~/.julia/artifacts
           key: ${{ runner.os }}-julia-artifacts-${{ hashFiles('**/Project.toml', '**/Manifest.toml') }}
 
-      - name: Install Xvfb
-        run: sudo apt-get update && sudo apt-get install -y xvfb
-
       - name: Install dependencies
         run: |
           julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
@@ -40,4 +37,4 @@ jobs:
       - name: Build and deploy docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: xvfb-run -s "-screen 0 1920x1080x24" julia --project=docs docs/make.jl
+        run: julia --project=docs docs/make.jl

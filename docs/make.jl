@@ -1,6 +1,3 @@
-using GLMakie
-GLMakie.activate!()
-
 using ComodoFerrite
 using Documenter
 
