@@ -167,10 +167,37 @@ function FerriteToComodo(grid, ::Type{Ferrite.Hexahedron})
     end
     V = [Point{3,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
 
+    numElements = Ferrite.getncells(grid)
+    CF_type = repeat(1:6,numElements) # Allocate face color/label data
+
     F = element2faces(E)
 
-    F_uni,_,c_uni = gunique(F,return_index=Val(true),return_counts=Val(true),sort_entries=true)
+    F_uni, indUni ,c_uni = gunique(F,return_index=Val(true),return_counts=Val(true),sort_entries=true)
     Lb = isone.(c_uni)
     Fb = F_uni[Lb]
-    return E , V, F, Fb
+    CF_type_uni = CF_type[indUni]
+    CFb_type = CF_type_uni[Lb]
+
+    return E , V, F, Fb, CFb_type
+end
+###########################################################
+###########################################################
+function FerriteToComodo(grid, ::Type{Ferrite.Tetrahedron})
+    E = Vector{Tet4{Int64}}()
+    for i in eachindex(grid.cells)
+        push!(E, grid.cells[i].nodes)
+    end
+    V = [Point{3,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
+
+    numElements = Ferrite.getncells(grid)
+    CF_type = repeat(1:6,numElements) # Allocate face color/label data
+    
+    F = element2faces(E)
+
+    F_uni, indUni, c_uni = gunique(F, return_index=Val(true), return_counts=Val(true), sort_entries=true)
+    Lb = isone.(c_uni)
+    Fb = F_uni[Lb]
+    CF_type_uni = CF_type[indUni]
+    CFb_type = CF_type_uni[Lb]
+    return E, V, F, Fb, CFb_type
 end

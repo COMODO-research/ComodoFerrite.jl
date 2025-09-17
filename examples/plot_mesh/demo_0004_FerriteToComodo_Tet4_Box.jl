@@ -5,9 +5,9 @@ Nx = 5;  Ny = 5 ; Nz = 5
 Lx = 2.0; Ly = 2.0; Lz = 2.0
 left = Ferrite.Vec(0.0, 0.0, 0.0)
 right = Ferrite.Vec(Lx, Ly, Lz)
-grid = generate_grid(Ferrite. Hexahedron, (Nx, Ny, Nz), left, right)
+grid = generate_grid(Ferrite.Tetrahedron, (Nx, Ny, Nz), left, right)
 
-E , V, F, Fb, CFb_type   = FerriteToComodo(grid, Ferrite.Hexahedron)
+E , V, F, Fb, CFb_type   = FerriteToComodo(grid, Ferrite.Tetrahedron)
 ## Visualize mesh 
 GLMakie.closeall()
 
