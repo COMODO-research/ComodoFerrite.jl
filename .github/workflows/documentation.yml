@@ -1,26 +1,26 @@
 name: Documentation
-
 on:
   push:
     branches:
       - main
-    tags: '*'
+    tags: ['*']
   pull_request:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install xvfb
+      - name: Install Xvfb and OpenGL dependencies
         run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - uses: julia-actions/setup-julia@latest
         with:
           version: '1.10'
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Check OpenGL
+        run: xvfb-run -s "-screen 0 1920x1080x24" glxinfo | grep "OpenGL version"
       - name: Build and deploy
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
-        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --project=docs/ docs/make.jl
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: xvfb-run -s "-screen 0 1920x1080x24" julia --project=docs/ docs/make.jl
