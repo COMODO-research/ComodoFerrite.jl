@@ -1,5 +1,11 @@
-using Revise , Comodo , Comodo.GLMakie ,Comodo.GeometryBasics , Comodo.Statistics
-using Ferrite, ComodoFerrite , Colors
+using Revise
+using Comodo
+using Comodo.GLMakie
+using Comodo.GeometryBasics
+using Comodo.Statistics
+using Ferrite
+using ComodoFerrite
+using Colors
 
 Nx = 5;  Ny = 5 ; Nz = 5
 Lx = 2.0; Ly = 2.0; Lz = 2.0

@@ -1,5 +1,11 @@
-using Revise , Comodo , Comodo.GLMakie , Comodo.GeometryBasics , Comodo.Statistics
-using Ferrite, ComodoFerrite , Colors
+using Revise
+using Comodo
+using Comodo.GLMakie
+using Comodo.GeometryBasics
+using Comodo.Statistics
+using Ferrite
+using ComodoFerrite
+using Colors
 ### The generated grid lacks the facetsets for the boundaries, so we add them by using Ferrite's addfacetset!.
 boxDim = [2.5,3.1,4] # Dimensions for the box in each direction
 pointSpacing = 0.5

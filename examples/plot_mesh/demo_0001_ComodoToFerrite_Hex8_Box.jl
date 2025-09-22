@@ -1,5 +1,11 @@
-using Revise , Comodo , Comodo.GLMakie ,Comodo.GeometryBasics , Comodo.Statistics
-using Ferrite, ComodoFerrite , Colors
+using Revise
+using Comodo
+using Comodo.GLMakie
+using Comodo.GeometryBasics
+using Comodo.Statistics
+using Ferrite
+using ComodoFerrite
+using Colors
 
 boxDim = [2,2,2]
 boxEl = [6,6,6] 
