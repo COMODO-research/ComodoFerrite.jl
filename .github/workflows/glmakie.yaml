@@ -5,13 +5,13 @@ on:
       - 'docs/**'
       - '*.md'
     branches:
-      - master
+      - main
   push:
     paths-ignore:
       - 'docs/**'
       - '*.md'
     branches:
-      - master
+      - main
     tags: '*'
 
 concurrency: 
