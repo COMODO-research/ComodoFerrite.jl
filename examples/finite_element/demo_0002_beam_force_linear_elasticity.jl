@@ -7,17 +7,17 @@ using Ferrite
 using ComodoFerrite
 using Colors
 #=
-Finite element for cube uniaxial in linear elastic regime 
+Finite element for beam in linear elastic regime 
 =#
 
 ## GLMakie setting 
 GLMakie.closeall()
 GLMakie.activate!()
 
-
 ## Mesh 
-boxDim = [10, 10, 10]
-boxEl = [5, 5, 5]
+pointSpacing = 3.0
+boxDim = [10.0, 40.0, 10.0]
+boxEl = ceil.(Int64, boxDim ./ pointSpacing)
 E, V, F, Fb, CFb_type = hexbox(boxDim, boxEl)
 grid = ComodoToFerrite(E, V, Fb, CFb_type, Ferrite.Hexahedron)
 
@@ -25,11 +25,9 @@ grid = ComodoToFerrite(E, V, Fb, CFb_type, Ferrite.Hexahedron)
 fig_mesh = Figure(size=(1200, 800))
 ax1 = AxisGeom(fig_mesh[1, 1], title="Hex8 mesh")
 hp1 = meshplot!(ax1, F, V, color=:gray, strokecolor=:black, strokewidth=3.0, shading=false, transparency=false)
-xlims!(ax1, -6, 6)
-ylims!(ax1, -6, 6)
-zlims!(ax1, -6, 6)
-# GLMakie.activate!()
-# display(GLMakie.Screen(), fig_mesh)
+# xlims!(ax1, -8, 8)
+# ylims!(ax1, -22, 22)
+# zlims!(ax1, -8, 8)
 
 ## FEM Values (Interpolation and Quadrature points)
 function create_values()
@@ -54,15 +52,9 @@ end
 
 
 ## Dirichlet Boundary Condition
-function create_bc(dh, grid, displacement_prescribed)
+function create_bc(dh, grid)
     ch = Ferrite.ConstraintHandler(dh)
-    dbc = Dirichlet(:u, getfacetset(grid, "bottom"), (x, t) -> [0.0], [3]) # bcSupportList_Z
-    add!(ch, dbc)
-    dbc = Dirichlet(:u, getfacetset(grid, "front"), (x, t) -> [0.0], [2]) # bcSupportList_Y
-    add!(ch, dbc)
-    dbc = Dirichlet(:u, getfacetset(grid, "left"), (x, t) -> [0.0], [1]) # bcSupportList_X
-    add!(ch, dbc)
-    dbc = Dirichlet(:u, getfacetset(grid, "top"), (x, t) -> [displacement_prescribed], [3]) # bcPrescribeList_Z
+    dbc = Dirichlet(:u, getfacetset(grid, "back"), (x, t) -> [0.0, 0.0, 0.0], [1, 2, 3]) # bcSupport
     add!(ch, dbc)
     Ferrite.close!(ch)
     return ch
@@ -70,27 +62,18 @@ end
 ## plot boundary condition
 ax2 = AxisGeom(fig_mesh[1, 2], title="Boundary condition")
 hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=2.0, shading=true, transparency=true)
-xlims!(ax2, -6, 6)
-ylims!(ax2, -6, 6)
-zlims!(ax2, -6, 6)
+# xlims!(ax2, -8, 8)
+# ylims!(ax2, -22, 22)
+# zlims!(ax2, -8, 8)
 
-facesset_bcSupportList_Z = get_boundary_points(grid, getfacetset(grid, "bottom"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_Z, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_Z")
+facesset_bcSupport = get_boundary_points(grid, getfacetset(grid, "back"), Faces, Ferrite.Hexahedron)
+scatter!(ax2, facesset_bcSupport, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupport")
 
-facesset_bcSupportList_Y = get_boundary_points(grid, getfacetset(grid, "front"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_Y, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_Y")
+facesset_bcPrescribe = get_boundary_points(grid, getfacetset(grid, "front"), Faces, Ferrite.Hexahedron)
+scatter!(ax2, facesset_bcPrescribe, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribe")
 
-facesset_bcSupportList_X = get_boundary_points(grid, getfacetset(grid, "left"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_X, color=:red, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_X")
-
-facesset_bcPrescribeList_Z = get_boundary_points(grid, getfacetset(grid, "top"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcPrescribeList_Z, color=:black, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribeList_Z")
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
-
-
 display(GLMakie.Screen(), fig_mesh)
-
-######################################################
 
 ## Finite element solver
 # Define the 3D material stiffness matrix in Voigt notation
@@ -137,19 +120,33 @@ function assemble_global_3d!(K, dh, cell_values, E, ν)
     return K
 end
 
-
-sampleSize = 10.0
-strainApplied = .5 # Equivalent linear strain
-loadingOption = "compression" # "tension" or "compression"
-
-if loadingOption == "tension"
-    displacement_prescribed = strainApplied * sampleSize
-elseif loadingOption == "compression"
-    displacement_prescribed = -strainApplied * sampleSize
+## Traction force
+function assemble_external_forces!(f_ext, dh, facetset, facetvalues, prescribed_traction)
+    # Create a temporary array for the facet's local contributions to the external force vector
+    fe_ext = zeros(getnbasefunctions(facetvalues))
+    for facet in FacetIterator(dh, facetset)
+        # Update the facetvalues to the correct facet number
+        reinit!(facetvalues, facet)
+        # Reset the temporary array for the next facet
+        fill!(fe_ext, 0.0)
+        # Access the cell's coordinates
+        for qp in 1:getnquadpoints(facetvalues)
+            # Calculate the global coordinate of the quadrature point.
+            # Get the integration weight for the current quadrature point.
+            dΓ = getdetJdV(facetvalues, qp)
+            for i in 1:getnbasefunctions(facetvalues)
+                Nᵢ = shape_value(facetvalues, qp, i)
+                fe_ext[i] += prescribed_traction ⋅ Nᵢ * dΓ
+            end
+        end
+        # Add the local contributions to the correct indices in the global external force vector
+        assemble!(f_ext, celldofs(facet), fe_ext)
+    end
+    return f_ext
 end
 
 dh = create_dofhandler(grid)
-ch = create_bc(dh, grid, displacement_prescribed)
+ch = create_bc(dh, grid)
 
 cell_values, facet_values = create_values()
 E = 500.0e3 # MPa
@@ -160,20 +157,24 @@ assemble_global_3d!(K, dh, cell_values, E, ν);
 
 
 f_ext = zeros(ndofs(dh))
-apply!(K, f_ext, ch)
+facetset = getfacetset(grid, "front")
+prescribed_traction = (0.0, 0.0, -1e3)
 
+assemble_external_forces!(f_ext, dh, facetset, facet_values, prescribed_traction)
+
+apply!(K, f_ext, ch)
 # Solve linear system
 U = K \ f_ext
 
 # === Prepare data for single displacement step ===
 totalSteps = 2  # Step 0 (undeformed) and Step 1 (deformed)
 
-UT = Vector{Vector{Point{3, Float64}}}(undef, totalSteps)   # Displaced geometry
+UT = Vector{Vector{Point{3,Float64}}}(undef, totalSteps)   # Displaced geometry
 UT_mag = Vector{Vector{Float64}}(undef, totalSteps)         # Magnitude per node
 ut_mag_max = zeros(totalSteps)                              # Max magnitude per step
 
 # Step 0: undeformed configuration
-UT[1] = [Point{3, Float64}([0.0, 0.0, 0.0]) for _ in V]
+UT[1] = [Point{3,Float64}([0.0, 0.0, 0.0]) for _ in V]
 UT_mag[1] = zeros(length(V))
 ut_mag_max[1] = 0.0
 
@@ -183,7 +184,7 @@ ux = getindex.(u_nodes, 1)
 uy = getindex.(u_nodes, 2)
 uz = getindex.(u_nodes, 3)
 
-disp_points = [Point{3, Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
+disp_points = [Point{3,Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
 UT[2] = disp_points
 
 UT_mag[2] = norm.(disp_points)
@@ -200,20 +201,20 @@ max_p = maxp([maxp(V) for V in VT])
 fig_disp = Figure(size=(800, 800))
 stepStart = 2  # Start at undeformed
 
-ax3 = AxisGeom(fig_disp[1, 1], title = "Step: $stepStart", limits=(min_p[1], max_p[1], min_p[2], max_p[2], min_p[3], max_p[3]))
-hp = meshplot!(ax3, Fb, VT[stepStart]; 
-               strokewidth = 2,
-               color = UT_mag[stepStart], 
-               transparency = false, 
-               colormap = Reverse(:Spectral), 
-               colorrange = (0, maximum(ut_mag_max)))
-Colorbar(fig_disp[1, 2], hp.plots[1], label = "Displacement magnitude [mm]") 
+ax3 = AxisGeom(fig_disp[1, 1], title="Step: $stepStart", limits=(min_p[1], max_p[1], min_p[2], max_p[2], min_p[3], max_p[3]))
+hp = meshplot!(ax3, Fb, VT[stepStart];
+    strokewidth=2,
+    color=UT_mag[stepStart],
+    transparency=false,
+    colormap=Reverse(:Spectral),
+    colorrange=(0, maximum(ut_mag_max)))
+Colorbar(fig_disp[1, 2], hp.plots[1], label="Displacement magnitude [mm]")
 
-incRange = 0:(totalSteps - 1)
-hSlider = Slider(fig_disp[2, 1], range = incRange, startvalue = stepStart - 1, linewidth = 30)
+incRange = 0:(totalSteps-1)
+hSlider = Slider(fig_disp[2, 1], range=incRange, startvalue=stepStart - 1, linewidth=30)
 
-on(hSlider.value) do stepIndex 
-    step = stepIndex + 1  
+on(hSlider.value) do stepIndex
+    step = stepIndex + 1
     hp[1] = GeometryBasics.Mesh(VT[step], Fb)
     hp.color = UT_mag[step]
     ax3.title = "Step: $stepIndex"
@@ -221,4 +222,3 @@ end
 
 slidercontrol(hSlider, ax3)
 display(GLMakie.Screen(), fig_disp)
-
