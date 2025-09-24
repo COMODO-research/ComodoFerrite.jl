@@ -9,8 +9,9 @@ using Colors
 
 boxDim = [2,2,2]
 boxEl = [6,6,6] 
-E,V,F,Fb,CFb_type = hexbox(boxDim,boxEl) 
-grid = ComodoToFerrite(E, V,Fb, CFb_type, Ferrite.Hexahedron)
+E, V, F, Fb, Cb = hexbox(boxDim,boxEl) 
+grid = ComodoToFerrite(E, V, Ferrite.Hexahedron; Fb, Cb)
+grid.facetsets
 addnodeset!(grid, "traction", x -> x[1] ≈ 1.0) # we add a nodeset to check the boundary condition
 
 

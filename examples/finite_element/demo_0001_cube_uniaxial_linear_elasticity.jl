@@ -12,24 +12,23 @@ Finite element for cube uniaxial in linear elastic regime
 
 ## GLMakie setting 
 GLMakie.closeall()
-GLMakie.activate!()
-
+GLMakie.activate!( fullscreen=true)
 
 ## Mesh 
 boxDim = [10, 10, 10]
 boxEl = [5, 5, 5]
-E, V, F, Fb, CFb_type = hexbox(boxDim, boxEl)
-grid = ComodoToFerrite(E, V, Fb, CFb_type, Ferrite.Hexahedron)
+E, V, F, Fb, Cb = hexbox(boxDim, boxEl)
+grid = ComodoToFerrite(E, V, Ferrite.Hexahedron; Fb, Cb )
 
 ## plot the mesh
-fig_mesh = Figure(size=(1200, 800))
+fig_mesh = Figure(size=(800, 800))
 ax1 = AxisGeom(fig_mesh[1, 1], title="Hex8 mesh")
 hp1 = meshplot!(ax1, F, V, color=:gray, strokecolor=:black, strokewidth=3.0, shading=false, transparency=false)
 xlims!(ax1, -6, 6)
 ylims!(ax1, -6, 6)
 zlims!(ax1, -6, 6)
-# GLMakie.activate!()
-# display(GLMakie.Screen(), fig_mesh)
+
+display(GLMakie.Screen(), fig_mesh)
 
 ## FEM Values (Interpolation and Quadrature points)
 function create_values()
@@ -68,7 +67,9 @@ function create_bc(dh, grid, displacement_prescribed)
     return ch
 end
 ## plot boundary condition
-ax2 = AxisGeom(fig_mesh[1, 2], title="Boundary condition")
+
+fig_bc = Figure(size=(800, 800))
+ax2 = AxisGeom(fig_bc[1, 1], title="Boundary condition")
 hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=2.0, shading=true, transparency=true)
 xlims!(ax2, -6, 6)
 ylims!(ax2, -6, 6)
@@ -88,7 +89,7 @@ scatter!(ax2, facesset_bcPrescribeList_Z, color=:black, markersize=15.0, marker=
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
 
 
-display(GLMakie.Screen(), fig_mesh)
+display(GLMakie.Screen(), fig_bc)
 
 ######################################################
 
@@ -140,7 +141,7 @@ end
 
 sampleSize = 10.0
 strainApplied = .5 # Equivalent linear strain
-loadingOption = "compression" # "tension" or "compression"
+loadingOption = "tension" # "tension" or "compression"
 
 if loadingOption == "tension"
     displacement_prescribed = strainApplied * sampleSize

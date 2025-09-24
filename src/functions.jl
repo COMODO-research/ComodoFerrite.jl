@@ -26,23 +26,45 @@ CTF:  ComodoToFerrite (can be changed)
 ###########################################################
 ###########################################################
 """
-     create_facetsets(E ,face_boundary, face_index::Int64)
+    create_facetsets(V ,face_boundary, cells, nodes)
 
 Convert Comodo.jl face boundary to Ferrite.jl face boundary
 """
-function create_facetsets(E ,face_boundary, face_index::Int64)
+function create_facetsets(V ,face_boundary, cells, nodes)
     strs = OrderedSet{FacetIndex}()
-    for i in eachindex(Vector.(face_boundary))
-        for j in eachindex(E)
-            check = issubset(Set(face_boundary[i]), Set(E[j]))
-            if check == true
-               cell_index = j
-               push!(strs, Ferrite.FacetIndex(cell_index,face_index) )
+    for face_vertices in face_boundary
+        found = false
+        for (element_id, element) in enumerate(cells)
+            element_faces = Ferrite.faces(element)
+            
+            for (local_face_id, element_face) in enumerate(element_faces)
+                face_nodes = [nodes[i].x for i in element_face]
+                input_face_nodes = [V[i] for i in face_vertices]
+                if Set(face_nodes) == Set(input_face_nodes)
+                    push!(strs, Ferrite.FacetIndex(element_id, local_face_id))
+                    found = true
+                    break
+                end
             end
+            found && break
         end
     end
     return strs
 end
+# function create_facetsets(E ,face_boundary, face_index::Int64)
+#     strs = OrderedSet{FacetIndex}()
+#     for i in eachindex(Vector.(face_boundary))
+#         for j in eachindex(E)
+#             check = issubset(Set(face_boundary[i]), Set(E[j]))
+#             if check == true
+#                cell_index = j
+#                push!(strs, Ferrite.FacetIndex(cell_index,face_index) )
+#             end
+#         end
+#     end
+#     return strs
+# end
+ 
 ###########################################################
 ###########################################################
 """
@@ -80,29 +102,32 @@ end
 
 Convert Hex8 of Comodo.jl to Ferrite.Hexahedron mesh in Ferrite.jl
 """
-function ComodoToFerrite(E, V, Fb, CFb_type,  ::Type{Ferrite.Hexahedron})
+function ComodoToFerrite(E, V, ::Type{Ferrite.Hexahedron}; Fb = nothing,  Cb= nothing)
 
     cells = [Ferrite.Hexahedron((e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
-    # based on Ferrite.jl
-    Fb_bottom = Fb[CFb_type.==1]  # Bottom face (1)
-    Fb_front = Fb[CFb_type.==3]   # Front face (2)
-    Fb_top = Fb[CFb_type.==2]     # Top face (6)
-    Fb_back = Fb[CFb_type.==4]    # Back face (4)
-    Fb_right = Fb[CFb_type.==5]   # Right face (3)
-    Fb_left = Fb[CFb_type.==6]    # Left face (5)
 
-    left = create_facetsets(E, Fb_left, 5)
-    bottom = create_facetsets(E, Fb_bottom, 1)
-    right = create_facetsets(E, Fb_right, 3)
-    back = create_facetsets(E, Fb_back, 4)
-    top = create_facetsets(E, Fb_top, 6)
-    front = create_facetsets(E, Fb_front, 2)
-    facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "back" => back, "top" => top, "front" => front)
-    
-    return Grid(cells, nodes, facetsets = facetsets)
+    if Fb === nothing && CFb_type === nothing
+        return Grid(cells, nodes)
+    else
+        # based on Ferrite.jl
+        Fb_bottom = Fb[Cb.==1]  # Bottom face (1)
+        Fb_front = Fb[Cb.==3]   # Front face (2)
+        Fb_top = Fb[Cb.==2]     # Top face (6)
+        Fb_back = Fb[Cb.==4]    # Back face (4)
+        Fb_right = Fb[Cb.==5]   # Right face (3)
+        Fb_left = Fb[Cb.==6]    # Left face (5)
+
+        left = create_facetsets(V, Fb_left, cells, nodes)
+        bottom = create_facetsets(V, Fb_bottom, cells, nodes)
+        right = create_facetsets(V, Fb_right, cells, nodes)
+        back = create_facetsets(V, Fb_back, cells, nodes)
+        top = create_facetsets(V, Fb_top, cells, nodes)
+        front = create_facetsets(V, Fb_front, cells, nodes)
+        facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "back" => back, "top" => top, "front" => front)
+        return Grid(cells, nodes, facetsets=facetsets)
+    end
 end
-
 
 ###########################################################
 ###########################################################
@@ -111,11 +136,32 @@ end
 
 Convert Tet4 of Comodo.jl to Ferrite.Tetrahedron mesh in Ferrite.jl
 """
-function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron})
+function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron}; Fb = nothing,  Cb = nothing )
 
     cells = [Ferrite.Tetrahedron((e[1], e[2], e[3], e[4])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
-    return Grid(cells, nodes)
+
+    if Fb === nothing && Cb === nothing
+        return Grid(cells, nodes)
+    else
+        # based on Ferrite.jl
+        Fb_bottom = Fb[Cb.==1]  # Bottom face (1)
+        Fb_front = Fb[Cb.==3]   # Front face (2)
+        Fb_top = Fb[Cb.==2]     # Top face (6)
+        Fb_back = Fb[Cb.==4]    # Back face (4)
+        Fb_right = Fb[Cb.==5]   # Right face (3)
+        Fb_left = Fb[Cb.==6]    # Left face (5)
+
+        left = create_facetsets(V, Fb_left, cells, nodes)
+        bottom = create_facetsets(V, Fb_bottom, cells, nodes)
+        right = create_facetsets(V, Fb_right, cells, nodes)
+        back = create_facetsets(V, Fb_back, cells, nodes)
+        top = create_facetsets(V, Fb_top, cells, nodes)
+        front = create_facetsets(V, Fb_front, cells, nodes)
+        facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "back" => back, "top" => top, "front" => front)
+        return Grid(cells, nodes, facetsets=facetsets)
+    end
+    return 
 end
 ###########################################################
 ###########################################################

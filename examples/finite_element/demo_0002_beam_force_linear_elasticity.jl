@@ -12,23 +12,24 @@ Finite element for beam in linear elastic regime
 
 ## GLMakie setting 
 GLMakie.closeall()
+# GLMakie.activate!()
 GLMakie.activate!()
-
 ## Mesh 
 pointSpacing = 3.0
 boxDim = [10.0, 40.0, 10.0]
 boxEl = ceil.(Int64, boxDim ./ pointSpacing)
-E, V, F, Fb, CFb_type = hexbox(boxDim, boxEl)
-grid = ComodoToFerrite(E, V, Fb, CFb_type, Ferrite.Hexahedron)
+E, V, F, Fb, Cb = hexbox(boxDim, boxEl)
+grid = ComodoToFerrite(E, V,  Ferrite.Hexahedron; Fb, Cb)
 
 ## plot the mesh
-fig_mesh = Figure(size=(1200, 800))
+fig_mesh = Figure(size=(800, 800))
 ax1 = AxisGeom(fig_mesh[1, 1], title="Hex8 mesh")
 hp1 = meshplot!(ax1, F, V, color=:gray, strokecolor=:black, strokewidth=3.0, shading=false, transparency=false)
 # xlims!(ax1, -8, 8)
 # ylims!(ax1, -22, 22)
 # zlims!(ax1, -8, 8)
 
+display(GLMakie.Screen(), fig_mesh)
 ## FEM Values (Interpolation and Quadrature points)
 function create_values()
     order = 1
@@ -60,7 +61,8 @@ function create_bc(dh, grid)
     return ch
 end
 ## plot boundary condition
-ax2 = AxisGeom(fig_mesh[1, 2], title="Boundary condition")
+fig_bc = Figure(size=(800, 800))
+ax2 = AxisGeom(fig_bc[1, 1], title="Boundary condition")
 hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=2.0, shading=true, transparency=true)
 # xlims!(ax2, -8, 8)
 # ylims!(ax2, -22, 22)
@@ -73,7 +75,7 @@ facesset_bcPrescribe = get_boundary_points(grid, getfacetset(grid, "front"), Fac
 scatter!(ax2, facesset_bcPrescribe, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribe")
 
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
-display(GLMakie.Screen(), fig_mesh)
+display(GLMakie.Screen(), fig_bc)
 
 ## Finite element solver
 # Define the 3D material stiffness matrix in Voigt notation
