@@ -14,6 +14,7 @@ export Faces, Nodes
 
 ### ComodoToFerrite
 export create_facetsets
+export create_facetsets_twoD
 export ComodoToFerrite 
 export get_boundary_points
 

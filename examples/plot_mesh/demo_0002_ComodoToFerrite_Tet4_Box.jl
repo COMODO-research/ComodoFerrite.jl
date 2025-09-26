@@ -35,7 +35,7 @@ hp2 = meshplot!(ax2, Mb, color=(Gray(0.95), 0.3),  strokecolor=:black, strokewid
 ## Visualize boundary condition
 ### First convert the face_index and node_index to points
 facesset = get_boundary_points(grid, getfacetset(grid, "traction"), Faces, Ferrite.Tetrahedron)
-nodesset = get_boundary_points(grid, getfacetset(grid, "bottom"), Faces, Ferrite.Tetrahedron)
+nodesset = get_boundary_points(grid, getfacetset(grid, "left"), Faces, Ferrite.Tetrahedron)
 
 scatter!(ax2, facesset, color=:blue,markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label = "Traction")
 scatter!(ax2, nodesset, color=:red,markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label = "Fixed_XYZ")
