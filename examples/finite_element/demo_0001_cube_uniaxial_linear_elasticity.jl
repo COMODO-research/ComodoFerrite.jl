@@ -1,18 +1,18 @@
-using Revise
 using Comodo
 using Comodo.GLMakie
+using Comodo.GLMakie.Colors
 using Comodo.GeometryBasics
 using Comodo.Statistics
-using Ferrite
+
 using ComodoFerrite
-using Colors
+using ComodoFerrite.Ferrite
+
 #=
-Finite element for cube uniaxial in linear elastic regime 
+Finite element analysis of uniaxial loading of a linear elastic cube
 =#
 
 ## GLMakie setting 
 GLMakie.closeall()
-GLMakie.activate!( fullscreen=true)
 
 ## Mesh 
 boxDim = [10, 10, 10]
@@ -123,6 +123,7 @@ function assemble_cell_3d!(ke, cell_values, E, ν)
     end
     return ke
 end
+
 # function to assemble the global stiffness matrix for 3D
 function assemble_global_3d!(K, dh, cell_values, E, ν)
     n_basefuncs = getnbasefunctions(cell_values)
@@ -137,7 +138,6 @@ function assemble_global_3d!(K, dh, cell_values, E, ν)
     end
     return K
 end
-
 
 sampleSize = 10.0
 strainApplied = .5 # Equivalent linear strain
@@ -158,7 +158,6 @@ E = 500.0e3 # MPa
 
 K = allocate_matrix(dh)
 assemble_global_3d!(K, dh, cell_values, E, ν);
-
 
 f_ext = zeros(ndofs(dh))
 apply!(K, f_ext, ch)
@@ -222,4 +221,3 @@ end
 
 slidercontrol(hSlider, ax3)
 display(GLMakie.Screen(), fig_disp)
-

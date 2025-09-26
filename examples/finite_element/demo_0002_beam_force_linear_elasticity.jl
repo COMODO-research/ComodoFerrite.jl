@@ -1,11 +1,11 @@
-using Revise
 using Comodo
 using Comodo.GLMakie
+using Comodo.GLMakie.Colors
 using Comodo.GeometryBasics
 using Comodo.Statistics
-using Ferrite
+
 using ComodoFerrite
-using Colors
+using ComodoFerrite.Ferrite
 #=
 Finite element for beam in linear elastic regime 
 =#

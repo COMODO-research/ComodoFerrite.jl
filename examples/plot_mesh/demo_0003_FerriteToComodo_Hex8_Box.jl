@@ -1,11 +1,11 @@
-using Revise
 using Comodo
 using Comodo.GLMakie
+using Comodo.GLMakie.Colors
 using Comodo.GeometryBasics
 using Comodo.Statistics
-using Ferrite
+
 using ComodoFerrite
-using Colors
+using ComodoFerrite.Ferrite
 
 Nx = 5;  Ny = 5 ; Nz = 5
 Lx = 2.0; Ly = 2.0; Lz = 2.0
@@ -14,16 +14,20 @@ right = Ferrite.Vec(Lx, Ly, Lz)
 grid = generate_grid(Ferrite. Hexahedron, (Nx, Ny, Nz), left, right)
 
 E , V, F, Fb, CFb_type   = FerriteToComodo(grid, Ferrite.Hexahedron)
+
 ## Visualize mesh 
 GLMakie.closeall()
+
+M = GeometryBasics.Mesh(V, F, normal = face_normals(V, F))
+Mb = GeometryBasics.Mesh(V, Fb, normal = face_normals(V, Fb))
 
 fig = Figure(size = (1200,800))
 
 ax1 = AxisGeom(fig[1, 1], title = "Hex8 mesh", azimuth = -0.2π, elevation = 0.1π)
-hp1 = meshplot!(ax1, F, V,color=:gray,  strokecolor=:black, strokewidth=3.0, shading =  false, transparency = false)
+hp1 = meshplot!(ax1, M, color=:gray,  strokecolor=:black, strokewidth=3.0, shading =  false, transparency = false)
 
 ax2 = AxisGeom(fig[1, 2], title = "Boundary condition", azimuth = -0.2π, elevation = 0.1π)
-hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3),  strokecolor=:black, strokewidth=2.0, shading=true, transparency = true)
+hp2 = meshplot!(ax2, Mb, color=(Gray(0.95), 0.3),  strokecolor=:black, strokewidth=2.0, shading=true, transparency = true)
  
 facesset_bottom = get_boundary_points(grid, getfacetset(grid, "bottom"), Faces, Ferrite.Hexahedron)
 facesset_top = get_boundary_points(grid, getfacetset(grid, "top"), Faces, Ferrite.Hexahedron)
