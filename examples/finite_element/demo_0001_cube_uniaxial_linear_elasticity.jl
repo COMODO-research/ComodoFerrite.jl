@@ -139,9 +139,52 @@ function assemble_global_3d!(K, dh, cell_values, E, ν)
     return K
 end
 
+function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
+    dh = create_dofhandler(grid)
+    numNodes = length(grid.nodes)
+    
+    # Step 0: undeformed configuration        
+    U0 = zeros(Point{3, Float64}, numNodes) # Initialise displacement vectors for initial state 
+    U0_mag = zeros(Float64, numNodes) # Initial displacement magnitude for initial state 
+    UT = [U0 for _ in 1:numSteps]   # Initialise displacement vectors for each step
+    UT_mag = [U0_mag for _ in 1:numSteps] # Initialise displacement magnitudes for each step
+    ut_mag_max = zeros(Float64,numSteps) # Max magnitude per step
+    for i = 1:numSteps-1
+        iStep = i+1
+        println("Solving step $iStep of $numSteps")
+        ch = create_bc(dh, grid, (iStep/(numSteps-1))*displacement_prescribed)
+
+        cell_values, facet_values = create_values()
+
+        K = allocate_matrix(dh)
+        assemble_global_3d!(K, dh, cell_values, E, ν);
+
+        f_ext = zeros(ndofs(dh))
+        apply!(K, f_ext, ch)
+
+        # Solve linear system
+        U = K \ f_ext
+
+        # Current deformed configuration
+        u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
+        ux = getindex.(u_nodes, 1)
+        uy = getindex.(u_nodes, 2)
+        uz = getindex.(u_nodes, 3)
+
+        disp_points = [Point{3, Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
+        UT[i+1] = disp_points
+        UT_mag[i+1] = norm.(disp_points)
+        ut_mag_max[i+1] = maximum(UT_mag[i+1])
+    end
+    return UT, UT_mag, ut_mag_max
+end
+
 sampleSize = 10.0
-strainApplied = .5 # Equivalent linear strain
+strainApplied = 0.5 # Equivalent linear strain
 loadingOption = "tension" # "tension" or "compression"
+
+E = 500.0e3 # MPa
+ν = 0.3 # Poisson's ratio
 
 if loadingOption == "tension"
     displacement_prescribed = strainApplied * sampleSize
@@ -149,49 +192,13 @@ elseif loadingOption == "compression"
     displacement_prescribed = -strainApplied * sampleSize
 end
 
-dh = create_dofhandler(grid)
-ch = create_bc(dh, grid, displacement_prescribed)
+numSteps = 20
 
-cell_values, facet_values = create_values()
-E = 500.0e3 # MPa
-ν = 0.3 # Poisson's ratio
-
-K = allocate_matrix(dh)
-assemble_global_3d!(K, dh, cell_values, E, ν);
-
-f_ext = zeros(ndofs(dh))
-apply!(K, f_ext, ch)
-
-# Solve linear system
-U = K \ f_ext
-
-# === Prepare data for single displacement step ===
-totalSteps = 2  # Step 0 (undeformed) and Step 1 (deformed)
-
-UT = Vector{Vector{Point{3, Float64}}}(undef, totalSteps)   # Displaced geometry
-UT_mag = Vector{Vector{Float64}}(undef, totalSteps)         # Magnitude per node
-ut_mag_max = zeros(totalSteps)                              # Max magnitude per step
-
-# Step 0: undeformed configuration
-UT[1] = [Point{3, Float64}([0.0, 0.0, 0.0]) for _ in V]
-UT_mag[1] = zeros(length(V))
-ut_mag_max[1] = 0.0
-
-# Step 1: deformed configuration
-u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
-ux = getindex.(u_nodes, 1)
-uy = getindex.(u_nodes, 2)
-uz = getindex.(u_nodes, 3)
-
-disp_points = [Point{3, Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
-UT[2] = disp_points
-
-UT_mag[2] = norm.(disp_points)
-ut_mag_max[2] = maximum(UT_mag[2])
+UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 
 # Create displaced mesh per step
 scale = 1.0
-VT = [V .+ scale .* UT[i] for i in 1:totalSteps]
+VT = [V .+ scale .* UT[i] for i in 1:numSteps]
 
 min_p = minp([minp(V) for V in VT])
 max_p = maxp([maxp(V) for V in VT])
@@ -209,13 +216,12 @@ hp = meshplot!(ax3, Fb, VT[stepStart];
                colorrange = (0, maximum(ut_mag_max)))
 Colorbar(fig_disp[1, 2], hp.plots[1], label = "Displacement magnitude [mm]") 
 
-incRange = 0:(totalSteps - 1)
+incRange = 1:numSteps
 hSlider = Slider(fig_disp[2, 1], range = incRange, startvalue = stepStart - 1, linewidth = 30)
 
-on(hSlider.value) do stepIndex 
-    step = stepIndex + 1  
-    hp[1] = GeometryBasics.Mesh(VT[step], Fb)
-    hp.color = UT_mag[step]
+on(hSlider.value) do stepIndex     
+    hp[1] = GeometryBasics.Mesh(VT[stepIndex], Fb)
+    hp.color = UT_mag[stepIndex]
     ax3.title = "Step: $stepIndex"
 end
 
