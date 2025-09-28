@@ -1,5 +1,5 @@
-using ComodoFerrite
 using Documenter
+using ComodoFerrite
 
 DocMeta.setdocmeta!(ComodoFerrite, :DocTestSetup, :(using ComodoFerrite); recursive=true)
 
