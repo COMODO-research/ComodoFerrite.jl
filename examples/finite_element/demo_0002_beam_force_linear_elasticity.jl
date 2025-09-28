@@ -147,54 +147,61 @@ function assemble_external_forces!(f_ext, dh, facetset, facetvalues, prescribed_
     return f_ext
 end
 
-dh = create_dofhandler(grid)
-ch = create_bc(dh, grid)
+function solveLinearElasticSteps(E, ν, grid, prescribed_traction, numSteps)
+    dh = create_dofhandler(grid)
+    numNodes = length(grid.nodes)
+    
+    # Step 0: undeformed configuration        
+    U0 = zeros(Point{3, Float64}, numNodes) # Initialise displacement vectors for initial state 
+    U0_mag = zeros(Float64, numNodes) # Initial displacement magnitude for initial state 
+    UT = [U0 for _ in 1:numSteps]   # Initialise displacement vectors for each step
+    UT_mag = [U0_mag for _ in 1:numSteps] # Initialise displacement magnitudes for each step
+    ut_mag_max = zeros(Float64,numSteps) # Max magnitude per step
+    for i = 1:numSteps-1
+        iStep = i+1
+        println("Solving step $iStep of $numSteps")
+        ch = create_bc(dh, grid)
 
-cell_values, facet_values = create_values()
+        cell_values, facet_values = create_values()
+
+        K = allocate_matrix(dh)
+        assemble_global_3d!(K, dh, cell_values, E, ν);
+
+        
+        f_ext = zeros(ndofs(dh))
+        facetset = getfacetset(grid, "front")
+        assemble_external_forces!(f_ext, dh, facetset, facet_values,  (iStep/(numSteps-1)) .*prescribed_traction)
+        apply!(K, f_ext, ch)
+
+        # Solve linear system
+        U = K \ f_ext
+
+        # Current deformed configuration
+        u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
+        ux = getindex.(u_nodes, 1)
+        uy = getindex.(u_nodes, 2)
+        uz = getindex.(u_nodes, 3)
+
+        disp_points = [Point{3, Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
+        UT[i+1] = disp_points
+        UT_mag[i+1] = norm.(disp_points)
+        ut_mag_max[i+1] = maximum(UT_mag[i+1])
+    end
+    return UT, UT_mag, ut_mag_max
+end
+
 E = 500.0e3 # MPa
 ν = 0.3 # Poisson's ratio
 
-K = allocate_matrix(dh)
-assemble_global_3d!(K, dh, cell_values, E, ν);
-
-
-f_ext = zeros(ndofs(dh))
-facetset = getfacetset(grid, "front")
 prescribed_traction = (0.0, 0.0, -1e3)
+numSteps = 20
 
-assemble_external_forces!(f_ext, dh, facetset, facet_values, prescribed_traction)
+UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, prescribed_traction, numSteps)
 
-apply!(K, f_ext, ch)
-# Solve linear system
-U = K \ f_ext
-
-# === Prepare data for single displacement step ===
-totalSteps = 2  # Step 0 (undeformed) and Step 1 (deformed)
-
-UT = Vector{Vector{Point{3,Float64}}}(undef, totalSteps)   # Displaced geometry
-UT_mag = Vector{Vector{Float64}}(undef, totalSteps)         # Magnitude per node
-ut_mag_max = zeros(totalSteps)                              # Max magnitude per step
-
-# Step 0: undeformed configuration
-UT[1] = [Point{3,Float64}([0.0, 0.0, 0.0]) for _ in V]
-UT_mag[1] = zeros(length(V))
-ut_mag_max[1] = 0.0
-
-# Step 1: deformed configuration
-u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
-ux = getindex.(u_nodes, 1)
-uy = getindex.(u_nodes, 2)
-uz = getindex.(u_nodes, 3)
-
-disp_points = [Point{3,Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
-UT[2] = disp_points
-
-UT_mag[2] = norm.(disp_points)
-ut_mag_max[2] = maximum(UT_mag[2])
 
 # Create displaced mesh per step
 scale = 1.0
-VT = [V .+ scale .* UT[i] for i in 1:totalSteps]
+VT = [V .+ scale .* UT[i] for i in 1:numSteps]
 
 min_p = minp([minp(V) for V in VT])
 max_p = maxp([maxp(V) for V in VT])
@@ -203,22 +210,21 @@ max_p = maxp([maxp(V) for V in VT])
 fig_disp = Figure(size=(800, 800))
 stepStart = 2  # Start at undeformed
 
-ax3 = AxisGeom(fig_disp[1, 1], title="Step: $stepStart", limits=(min_p[1], max_p[1], min_p[2], max_p[2], min_p[3], max_p[3]))
-hp = meshplot!(ax3, Fb, VT[stepStart];
-    strokewidth=2,
-    color=UT_mag[stepStart],
-    transparency=false,
-    colormap=Reverse(:Spectral),
-    colorrange=(0, maximum(ut_mag_max)))
-Colorbar(fig_disp[1, 2], hp.plots[1], label="Displacement magnitude [mm]")
+ax3 = AxisGeom(fig_disp[1, 1], title = "Step: $stepStart", limits=(min_p[1], max_p[1], min_p[2], max_p[2], min_p[3], max_p[3]))
+hp = meshplot!(ax3, Fb, VT[stepStart]; 
+               strokewidth = 2,
+               color = UT_mag[stepStart], 
+               transparency = false, 
+               colormap = Reverse(:Spectral), 
+               colorrange = (0, maximum(ut_mag_max)))
+Colorbar(fig_disp[1, 2], hp.plots[1], label = "Displacement magnitude [mm]") 
 
-incRange = 0:(totalSteps-1)
-hSlider = Slider(fig_disp[2, 1], range=incRange, startvalue=stepStart - 1, linewidth=30)
+incRange = 1:numSteps
+hSlider = Slider(fig_disp[2, 1], range = incRange, startvalue = stepStart - 1, linewidth = 30)
 
-on(hSlider.value) do stepIndex
-    step = stepIndex + 1
-    hp[1] = GeometryBasics.Mesh(VT[step], Fb)
-    hp.color = UT_mag[step]
+on(hSlider.value) do stepIndex     
+    hp[1] = GeometryBasics.Mesh(VT[stepIndex], Fb)
+    hp.color = UT_mag[stepIndex]
     ax3.title = "Step: $stepIndex"
 end
 

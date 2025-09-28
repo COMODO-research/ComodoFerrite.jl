@@ -7,15 +7,13 @@ using Comodo.Statistics
 using ComodoFerrite
 using ComodoFerrite.Ferrite
 
-plateDim1 = [20.0,24.0]
-pointSpacing1 = 2.0
+Nx, Ny  = (5 , 5)
+Lx, Ly  = (2. , 2.)
+left = Ferrite.Vec(0.0, 0.0)
+right = Ferrite.Vec(Lx, Ly)
+grid = generate_grid(Ferrite.Quadrilateral, (Nx, Ny), left, right)
 
-orientation1 = :up
-F, V, Eb, Cb = triplate(plateDim1, pointSpacing1; orientation= orientation1, return_boundary_edges =  Val(true) )
-
-
-grid = ComodoToFerrite(F, V, Ferrite.Triangle;  Eb, Cb)
-
+F, V   = FerriteToComodo(grid, Ferrite.Quadrilateral)
 
 GLMakie.closeall()
 
@@ -24,7 +22,7 @@ fig = Figure(size=(800, 600))
 ax = Axis(fig[1, 1], aspect=DataAspect(), xlabel="X", ylabel="Y",title="Mesh with Boundary Conditions")
 poly!(ax, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=1, shading =  true, transparency = false)
 
-facesset = get_boundary_points(grid, getfacetset(grid, "right"), Faces, Ferrite.Quadrilateral)
+facesset = get_boundary_points(grid, getfacetset(grid, "top"), Faces, Ferrite.Quadrilateral)
 scatter!(ax, facesset, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label = "Fixed XY")
 
 display(GLMakie.Screen(), fig)

@@ -77,13 +77,16 @@ end
 Convert Quad4 of Comodo.jl to Ferrite.Quadrilateral mesh in Ferrite.jl
 
 """
-function ComodoToFerrite(F, V, ::Type{Ferrite.Quadrilateral}; Eb = nothing, Cb = nothing)
+function ComodoToFerrite(F, V, ::Type{Ferrite.Quadrilateral}; kwargs...)
     cells = [Ferrite.Quadrilateral((e[1], e[2], e[3], e[4])) for e in F]
     nodes = [Ferrite.Node((e[1], e[2])) for e in V]
 
-    if Eb === nothing && Cb === nothing
+    if isempty(kwargs)
         return Grid(cells, nodes)
-    else
+    elseif length(kwargs ) == 2
+        Eb = kwargs[1]
+        Cb =  kwargs[2]
+
         Fb_left = Eb[Cb.==4]
         Fb_bottom = Eb[Cb.==1]
         Fb_top = Eb[Cb.==3]
@@ -94,8 +97,9 @@ function ComodoToFerrite(F, V, ::Type{Ferrite.Quadrilateral}; Eb = nothing, Cb =
         top = create_facetsets_twoD(Fb_top, cells)
         facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "top" => top)
         return Grid(cells, nodes, facetsets=facetsets)
-    end 
-    
+    else
+        error("the number of arguments is incorrect")
+    end
 end
 ###########################################################
 ###########################################################
@@ -104,12 +108,29 @@ end
 
 Convert Tri3 of Comodo.jl to Ferrite.Triangle mesh in Ferrite.jl
 """
-function ComodoToFerrite(F1, V1, ::Type{Ferrite.Triangle}, )
+function ComodoToFerrite(F1, V1, ::Type{Ferrite.Triangle}; kwargs...)
 
     cells = [Ferrite.Triangle((e[1], e[2], e[3])) for e in F1]
     nodes = [Ferrite.Node((e[1], e[2])) for e in V1]
+    if isempty(kwargs)
+        return Grid(cells, nodes)
+    elseif length(kwargs ) == 2
+        Eb = kwargs[1]
+        Cb =  kwargs[2]
 
-    return Grid(cells, nodes)
+        Fb_left = Eb[Cb.==4]
+        Fb_bottom = Eb[Cb.==1]
+        Fb_top = Eb[Cb.==3]
+        Fb_right = Eb[Cb.==2]
+        left = create_facetsets_twoD(Fb_left, cells)
+        bottom = create_facetsets_twoD(Fb_bottom, cells)
+        right = create_facetsets_twoD(Fb_right, cells)
+        top = create_facetsets_twoD(Fb_top, cells)
+        facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "top" => top)
+        return Grid(cells, nodes, facetsets=facetsets)
+    else
+        error("the number of arguments is incorrect")
+    end
 end
 ###########################################################
 ###########################################################
@@ -129,27 +150,40 @@ function get_boundary_points(grid, facets, ::Type{Faces}, ::Type{T}) where {
 end
 ###########################################################
 ###########################################################
+function get_boundary_points(grid, nodeset, ::Type{Nodes}, ::Type{T}) where {
+    T<:Union{Ferrite.Quadrilateral,Ferrite.Triangle}
+}
+    nodesset = [Point{2, Float64}(Ferrite.get_node_coordinate(grid.nodes[i]).data...) for i in nodeset]
+    return nodesset
+end
+###########################################################
+###########################################################
 
 """
      ComodoToFerrite(E, V, Ferrite.Hexahedron )
 
 Convert Hex8 of Comodo.jl to Ferrite.Hexahedron mesh in Ferrite.jl
 """
-function ComodoToFerrite(E, V, ::Type{Ferrite.Hexahedron}; Fb = nothing,  Cb= nothing)
+function ComodoToFerrite(E, V, ::Type{Ferrite.Hexahedron}; kwargs...)
 
     cells = [Ferrite.Hexahedron((e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
 
-    if Fb === nothing && CFb_type === nothing
+    if isempty(kwargs)
         return Grid(cells, nodes)
-    else
+    elseif length(kwargs ) == 2
+
+        Fb =  kwargs[1]
+        Cb =  kwargs[2]
+
+
         # based on Ferrite.jl
-        Fb_bottom = Fb[Cb.==1]  # Bottom face (1)
-        Fb_front = Fb[Cb.==3]   # Front face (2)
-        Fb_top = Fb[Cb.==2]     # Top face (6)
-        Fb_back = Fb[Cb.==4]    # Back face (4)
-        Fb_right = Fb[Cb.==5]   # Right face (3)
-        Fb_left = Fb[Cb.==6]    # Left face (5)
+        Fb_bottom = Fb[Cb.==1]  
+        Fb_front = Fb[Cb.==3]   
+        Fb_top = Fb[Cb.==2]     
+        Fb_back = Fb[Cb.==4]   
+        Fb_right = Fb[Cb.==5]   
+        Fb_left = Fb[Cb.==6]   
 
         left = create_facetsets( Fb_left, cells)
         bottom = create_facetsets(Fb_bottom, cells)
@@ -159,9 +193,10 @@ function ComodoToFerrite(E, V, ::Type{Ferrite.Hexahedron}; Fb = nothing,  Cb= no
         front = create_facetsets(Fb_front, cells,)
         facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "back" => back, "top" => top, "front" => front)
         return Grid(cells, nodes, facetsets=facetsets)
+    else
+        error("the number of arguments is incorrect")
     end
 end
-
 ###########################################################
 ###########################################################
 """
@@ -169,21 +204,25 @@ end
 
 Convert Tet4 of Comodo.jl to Ferrite.Tetrahedron mesh in Ferrite.jl
 """
-function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron}; Fb = nothing,  Cb = nothing )
+function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron}; kwargs... )
 
     cells = [Ferrite.Tetrahedron((e[1], e[2], e[3], e[4])) for e in E]
     nodes = [Ferrite.Node((e[1], e[2], e[3])) for e in V]
 
-    if Fb === nothing && Cb === nothing
+    if isempty(kwargs)
         return Grid(cells, nodes)
-    else
+    elseif length(kwargs ) == 2
+
+        Fb =  kwargs[1]
+        Cb =  kwargs[2]
+        
         # based on Ferrite.jl
-        Fb_bottom = Fb[Cb.==1]  # Bottom face (1)
-        Fb_front = Fb[Cb.==3]   # Front face (2)
-        Fb_top = Fb[Cb.==2]     # Top face (6)
-        Fb_back = Fb[Cb.==4]    # Back face (4)
-        Fb_right = Fb[Cb.==6]   # Right face (3)
-        Fb_left = Fb[Cb.==5]    # Left face (5)
+        Fb_bottom = Fb[Cb.==1]  
+        Fb_front = Fb[Cb.==3]   
+        Fb_top = Fb[Cb.==2]     
+        Fb_back = Fb[Cb.==4]    
+        Fb_right = Fb[Cb.==6]   
+        Fb_left = Fb[Cb.==5]   
 
         left = create_facetsets(Fb_left, cells)
         bottom = create_facetsets(Fb_bottom, cells)
@@ -193,8 +232,9 @@ function ComodoToFerrite(E, V, ::Type{Ferrite.Tetrahedron}; Fb = nothing,  Cb = 
         front = create_facetsets(Fb_front, cells)
         facetsets = Dict("left" => left, "bottom" => bottom, "right" => right, "back" => back, "top" => top, "front" => front)
         return Grid(cells, nodes, facetsets=facetsets)
-    end
-    return 
+    else
+        error("the number of arguments is incorrect")
+    end 
 end
 ###########################################################
 ###########################################################
@@ -240,7 +280,7 @@ end
 
 """
 function FerriteToComodo(grid, ::Type{Ferrite.Hexahedron})
-     E = Vector{Hex8{Int64}}()
+    E = Vector{Hex8{Int64}}()
     for i in eachindex(grid.cells)
         push!(E , grid.cells[i].nodes)
     end
@@ -280,3 +320,25 @@ function FerriteToComodo(grid, ::Type{Ferrite.Tetrahedron})
     CFb_type = CF_type_uni[Lb]
     return E, V, F, Fb, CFb_type
 end
+###########################################################
+###########################################################
+function FerriteToComodo(grid, ::Type{Ferrite.Triangle})
+
+    F = Vector{TriangleFace{Int64}}()
+    for i in eachindex(grid.cells)
+        push!(F, grid.cells[i].nodes)
+    end
+    V = [Point{2,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
+    return F, V
+end 
+###########################################################
+###########################################################
+function FerriteToComodo(grid, ::Type{Ferrite.Quadrilateral})
+
+    F = Vector{QuadFace{Int64}}()
+    for i in eachindex(grid.cells)
+        push!(F, grid.cells[i].nodes)
+    end
+    V = [Point{2,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
+    return F, V
+end 
