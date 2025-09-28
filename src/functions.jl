@@ -334,7 +334,6 @@ end
 ###########################################################
 ###########################################################
 function FerriteToComodo(grid, ::Type{Ferrite.Quadrilateral})
-
     F = Vector{QuadFace{Int64}}()
     for i in eachindex(grid.cells)
         push!(F, grid.cells[i].nodes)
