@@ -5,7 +5,6 @@ using OrderedCollections
 using GeometryBasics
 using GLMakie
 
-
 struct Faces end
 struct Nodes end
 
