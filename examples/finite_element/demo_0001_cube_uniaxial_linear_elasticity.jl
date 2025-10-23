@@ -150,8 +150,9 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
     UT_mag = [U0_mag for _ in 1:numSteps] # Initialise displacement magnitudes for each step
     ut_mag_max = zeros(Float64,numSteps) # Max magnitude per step
     for i = 1:numSteps-1
-        iStep = i+1
+        iStep = i
         println("Solving step $iStep of $numSteps")
+        
         ch = create_bc(dh, grid, (iStep/(numSteps-1))*displacement_prescribed)
 
         cell_values, facet_values = create_values()

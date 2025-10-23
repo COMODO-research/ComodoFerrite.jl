@@ -158,7 +158,7 @@ function solveLinearElasticSteps(E, ν, grid, prescribed_traction, numSteps)
     UT_mag = [U0_mag for _ in 1:numSteps] # Initialise displacement magnitudes for each step
     ut_mag_max = zeros(Float64,numSteps) # Max magnitude per step
     for i = 1:numSteps-1
-        iStep = i+1
+        iStep = i
         println("Solving step $iStep of $numSteps")
         ch = create_bc(dh, grid)
 
@@ -167,7 +167,6 @@ function solveLinearElasticSteps(E, ν, grid, prescribed_traction, numSteps)
         K = allocate_matrix(dh)
         assemble_global_3d!(K, dh, cell_values, E, ν);
 
-        
         f_ext = zeros(ndofs(dh))
         facetset = getfacetset(grid, "front")
         assemble_external_forces!(f_ext, dh, facetset, facet_values,  (iStep/(numSteps-1)) .*prescribed_traction)
