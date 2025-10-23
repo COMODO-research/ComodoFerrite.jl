@@ -7,6 +7,7 @@ using Comodo.Statistics
 using ComodoFerrite
 using ComodoFerrite.Ferrite
 
+
 #=
 Finite element analysis of uniaxial loading of a linear elastic cube
 =#
