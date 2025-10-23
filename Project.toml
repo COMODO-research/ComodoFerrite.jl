@@ -6,7 +6,6 @@ authors = ["Aminofa70 <amin.alibakhshi@upm.es> and contributors"]
 [deps]
 Comodo = "59095408-2761-4f7a-bdc2-044e78630271"
 Ferrite = "c061ca5d-56c9-439f-9c0e-210fe06d3992"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
@@ -14,7 +13,6 @@ OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 [compat]
 Comodo = "1.0.3"
 Ferrite = "1.1.0"
-ForwardDiff = "1.2.2"
 GLMakie = "0.13.6"
 GeometryBasics = "0.5.10"
 OrderedCollections = "1.8.1"
