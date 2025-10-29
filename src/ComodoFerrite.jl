@@ -1,4 +1,5 @@
 module ComodoFerrite
+
 using Comodo
 using Ferrite
 using OrderedCollections
@@ -9,6 +10,7 @@ struct Faces end
 struct Nodes end
 
 export Faces, Nodes
+export Comodo
 
 #################
 
