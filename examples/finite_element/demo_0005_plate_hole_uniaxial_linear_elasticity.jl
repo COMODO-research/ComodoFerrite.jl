@@ -6,6 +6,7 @@ using Comodo.Statistics
 
 using ComodoFerrite
 using ComodoFerrite.Ferrite
+
 GLMakie.closeall()
 
 w = 12.0

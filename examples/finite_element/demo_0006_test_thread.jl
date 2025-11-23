@@ -1,7 +1,13 @@
 ### check the Ferrite for Thread
-using Ferrite, SparseArrays
+using ComodoFerrite
+using ComodoFerrite.Ferrite
+using ComodoFerrite.Comodo
+using ComodoFerrite.Comodo.GeometryBasics
+
+using SparseArrays
 using OhMyThreads
 using Base.Threads
+
 ### first in the terminal:  julia -t auto or  julia -t NumberofThread
 ### before run check the number of thread by Threads.nthreads()
 ### then run the code in REPL by include("demo_0006_test_thread.jl")
@@ -12,13 +18,13 @@ using Base.Threads
 
 
 function create_grid()
-    nx, ny  = (800 , 800)
+    nx, ny  = (1000 , 1000)
     Lx, Ly  = (2. , 2.)
     corners = [
-        Ferrite.Vec{2}((0.0, 0.0)), Ferrite.Vec{2}((Lx, 0.0)),
-        Ferrite.Vec{2}((Lx, Ly)), Ferrite.Vec{2}((0.0, Ly))
+        ComodoFerrite.Ferrite.Vec{2}((0.0, 0.0)), ComodoFerrite.Ferrite.Vec{2}((Lx, 0.0)),
+        ComodoFerrite.Ferrite.Vec{2}((Lx, Ly)), ComodoFerrite.Ferrite.Vec{2}((0.0, Ly))
     ]
-    grid = Ferrite.generate_grid(Ferrite.Quadrilateral, (nx, ny), corners)
+    grid = ComodoFerrite.Ferrite.generate_grid(ComodoFerrite.Ferrite.Quadrilateral, (nx, ny), corners)
     colors = create_coloring(grid)
 
     return grid, colors
@@ -42,14 +48,14 @@ function create_values()
     return cellvalues, facetvalues
 end
 function create_dofhandler(grid)
-    dh = Ferrite.DofHandler(grid)
-    Ferrite.add!(dh, :u, Ferrite.Lagrange{Ferrite.RefQuadrilateral,1}()^2)
-    Ferrite.close!(dh)
+    dh = ComodoFerrite.Ferrite.DofHandler(grid)
+    ComodoFerrite.Ferrite.add!(dh, :u, ComodoFerrite.Ferrite.Lagrange{ComodoFerrite.Ferrite.RefQuadrilateral,1}()^2)
+    ComodoFerrite.Ferrite.close!(dh)
     return dh
 end
 
 function assemble_cell!(dh, Ke::Matrix, fe::Vector, cellvalues::CellValues, facetvalues::FacetValues,
-    C::SymmetricTensor, facetset, traction::Vec)
+    C::SymmetricTensor, facetset, traction::ComodoFerrite.Ferrite.Vec)
     fill!(Ke, 0)
     fill!(fe, 0)
     for q_point in 1:getnquadpoints(cellvalues)
@@ -104,7 +110,7 @@ function assemble_global!(
     _ = start_assemble(K, f)
     # Body force and material stiffness
     C = create_material_stiffness()
-    traction = Vec(0.0, 1.0)
+    traction = ComodoFerrite.Ferrite.Vec(0.0, 1.0)
     # Loop over the colors
     for color in colors
         # Dynamic scheduler spawning `ntasks` tasks where each task will process a chunk of
@@ -151,4 +157,3 @@ main(; ntasks = 1)
 main(; ntasks = 2) 
 main(; ntasks = 3) 
 main(; ntasks = 4) 
- 
