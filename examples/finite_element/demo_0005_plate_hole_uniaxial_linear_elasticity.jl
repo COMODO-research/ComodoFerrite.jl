@@ -178,7 +178,7 @@ max_p = maxp([maxp(V) for V in VT])
 # === Visualization setup ===
 fig_disp = Figure(size=(1000,600))
 stepStart = 2  # Start at undeformed
-ax3 = Axis(fig_disp[1, 1], title = "Step: $stepStart")
+ax3 = Axis(fig_disp[1, 1], aspect=DataAspect(), title = "Step: $stepStart")
 
 xlims!(ax3, min_p[1], max_p[1])
 ylims!(ax3, min_p[2], max_p[2])
