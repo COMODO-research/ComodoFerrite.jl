@@ -341,3 +341,26 @@ function FerriteToComodo(grid, ::Type{Ferrite.Quadrilateral})
     V = [Point{2,Float64}(Ferrite.get_node_coordinate(n)...) for n in grid.nodes]
     return F, V
 end 
+###########################################################
+###########################################################
+function faceset_to_cellid_faceid(E::Vector{<: AbstractElement{N, T}}, faceIndices) where N where T 
+    element_type = eltype(E)
+    if element_type <: Tet4{T}
+        nf = 4        
+    elseif element_type <: Tet10{T}
+        nf = 4                
+    elseif element_type <: Tet15{T}
+        nf = 4                
+    elseif element_type <: Hex8{T}
+        nf = 6        
+    elseif element_type <: Penta6{T}
+        nf = 5
+    end
+    face_cell_id = Vector{Int}(undef, length(faceIndices))
+    face_id = Vector{Int}(undef, length(faceIndices))
+    @inbounds for (indFace, i) in enumerate(faceIndices)
+        face_cell_id[indFace] = ceil(Int,i/nf)
+        face_id[indFace] = mod1(i,nf)
+    end
+    return face_cell_id, face_id
+end

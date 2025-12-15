@@ -1,8 +1,8 @@
-using Comodo
-using Comodo.GLMakie
-using Comodo.GLMakie.Colors
-using Comodo.GeometryBasics
-using Comodo.Statistics
+using ComodoFerrite.Comodo
+using ComodoFerrite.Comodo.GLMakie
+using ComodoFerrite.Comodo.GLMakie.Colors
+using ComodoFerrite.Comodo.GeometryBasics
+using ComodoFerrite.Comodo.Statistics
 
 using ComodoFerrite
 using ComodoFerrite.Ferrite

@@ -19,6 +19,7 @@ export create_facetsets
 export create_facetsets_twoD
 export ComodoToFerrite 
 export get_boundary_points
+export faceset_to_cellid_faceid 
 
 ### FerriteToComodo functions
 export FerriteToComodo
