@@ -81,7 +81,7 @@ end
 
 # function to assemble the local stiffness matrix for 2D Plane stress
 function assemble_cell!(ke, cell_values, E, ν)
-    C = C = get_material_matrix(E, ν)
+    C = get_material_matrix(E, ν)
     for qp in 1:getnquadpoints(cell_values)
         dΩ = getdetJdV(cell_values, qp)
         for i in 1:getnbasefunctions(cell_values)
@@ -151,8 +151,8 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 end
 
 sampleSize = 3.17
-strainApplied = 0.5 # Equivalent linear strain
-loadingOption = "tension" # "tension" or "compression"
+strainApplied = 0.05 # 
+loadingOption = "tension" #  "tension" or "compression"
 
 E = 500.0e3 # MPa
 ν = 0.3 # Poisson's ratio
@@ -168,7 +168,7 @@ numSteps = 20
 UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 
 # Create displaced mesh per step
-scale = 1.0
+scale = 5.0
 
 VV = [Point{2,Float64}(e[1], e[2]) for e in V]
 VT = [VV .+ scale .* UT[i] for i in 1:numSteps]

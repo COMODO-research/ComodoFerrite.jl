@@ -192,14 +192,14 @@ end
 E = 500.0e3 # MPa
 ν = 0.3 # Poisson's ratio
 
-prescribed_traction = (0.0, 0.0, -1e3)
+prescribed_traction = (0.0, 0.0, -30)
 numSteps = 20
 
 UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, prescribed_traction, numSteps)
 
 
 # Create displaced mesh per step
-scale = 1.0
+scale = 10.0
 VT = [V .+ scale .* UT[i] for i in 1:numSteps]
 
 min_p = minp([minp(V) for V in VT])

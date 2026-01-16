@@ -113,7 +113,7 @@ end
 function assemble_cell_3d!(ke, cell_values, E, ν)
     C = get_material_matrix_3d(E, ν)
     for qp in 1:getnquadpoints(cell_values)
-        dΩ = getdetJdV(cell_values, qp)
+        dΩ = getdetJdV(cell_values, qp) 
         for i in 1:getnbasefunctions(cell_values)
             ∇Ni = shape_gradient(cell_values, qp, i)
             for j in 1:getnbasefunctions(cell_values)
@@ -173,6 +173,7 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
         uy = getindex.(u_nodes, 2)
         uz = getindex.(u_nodes, 3)
 
+
         disp_points = [Point{3, Float64}([ux[j], uy[j], uz[j]]) for j in eachindex(ux)]
         UT[i+1] = disp_points
         UT_mag[i+1] = norm.(disp_points)
@@ -182,7 +183,7 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 end
 
 sampleSize = 10.0
-strainApplied = 0.5 # Equivalent linear strain
+strainApplied = 0.01 # 
 loadingOption = "tension" # "tension" or "compression"
 
 E = 500.0e3 # MPa
@@ -199,7 +200,7 @@ numSteps = 20
 UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 
 # Create displaced mesh per step
-scale = 1.0
+scale = 5.0
 VT = [V .+ scale .* UT[i] for i in 1:numSteps]
 
 min_p = minp([minp(V) for V in VT])

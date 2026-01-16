@@ -86,7 +86,7 @@ end
 
 # function to assemble the local stiffness matrix for 2D Plane stress
 function assemble_cell!(ke, cell_values, E, ν)
-    C = C = get_material_matrix(E, ν)
+    C = get_material_matrix(E, ν)
     for qp in 1:getnquadpoints(cell_values)
         dΩ = getdetJdV(cell_values, qp)
         for i in 1:getnbasefunctions(cell_values)
@@ -113,6 +113,26 @@ function assemble_global!(K, dh, cell_values, E, ν)
         assemble!(assembler, celldofs(cell), ke)
     end
     return K
+end
+function calculate_stresses(grid, dh, cv, u, C)
+    qp_stresses = [
+        [zero(SymmetricTensor{2, 2}) for _ in 1:getnquadpoints(cv)]
+            for _ in 1:getncells(grid)
+    ]
+    avg_cell_stresses = tuple((zeros(getncells(grid)) for _ in 1:3)...)
+    for cell in CellIterator(dh)
+        reinit!(cv, cell)
+        cell_stresses = qp_stresses[cellid(cell)]
+        for q_point in 1:getnquadpoints(cv)
+            ε = function_symmetric_gradient(cv, q_point, u, celldofs(cell))
+            cell_stresses[q_point] = C ⊡ ε
+        end
+        σ_avg = sum(cell_stresses) / getnquadpoints(cv)
+        avg_cell_stresses[1][cellid(cell)] = σ_avg[1, 1]
+        avg_cell_stresses[2][cellid(cell)] = σ_avg[2, 2]
+        avg_cell_stresses[3][cellid(cell)] = σ_avg[1, 2]
+    end
+    return qp_stresses, avg_cell_stresses
 end
 
 function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
@@ -142,6 +162,9 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
         # Solve linear system
         U = K \ f_ext
 
+        C = get_material_matrix(E, ν)
+        qp_stresses, avg_cell_stresses = calculate_stresses(grid, dh, cell_values, U, C)
+
         # Current deformed configuration
         u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
         ux = getindex.(u_nodes, 1)
@@ -156,7 +179,7 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 end
 
 sampleSize = 3.17
-strainApplied = 0.5 # Equivalent linear strain
+strainApplied = 0.05 
 loadingOption = "tension" # "tension" or "compression"
 
 E = 500.0e3 # MPa
@@ -173,7 +196,7 @@ numSteps = 20
 UT, UT_mag, ut_mag_max = solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
 
 # Create displaced mesh per step
-scale = 1.0
+scale = 5.0
 
 VV = [Point{2,Float64}(e[1], e[2]) for e in V]
 VT = [VV .+ scale .* UT[i] for i in 1:numSteps]
