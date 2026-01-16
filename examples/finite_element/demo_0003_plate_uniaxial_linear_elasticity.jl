@@ -114,25 +114,59 @@ function assemble_global!(K, dh, cell_values, E, ν)
     end
     return K
 end
+function vonMises(σ)
+    s = dev(σ)
+    return sqrt(3.0 / 2.0 * s ⊡ s)
+end;
+# function calculate_stresses(grid, dh, cv, u, C)
+#     qp_stresses = [
+#         [zero(SymmetricTensor{2, 2}) for _ in 1:getnquadpoints(cv)]
+#             for _ in 1:getncells(grid)
+#     ]
+#     avg_cell_stresses = tuple((zeros(getncells(grid)) for _ in 1:3)...)
+#     for cell in CellIterator(dh)
+#         reinit!(cv, cell)
+#         cell_stresses = qp_stresses[cellid(cell)]
+#         for q_point in 1:getnquadpoints(cv)
+#             ε = function_symmetric_gradient(cv, q_point, u, celldofs(cell))
+#             cell_stresses[q_point] = C ⊡ ε
+#         end
+#         σ_avg = sum(cell_stresses) / getnquadpoints(cv)
+#         avg_cell_stresses[1][cellid(cell)] = σ_avg[1, 1]
+#         avg_cell_stresses[2][cellid(cell)] = σ_avg[2, 2]
+#         avg_cell_stresses[3][cellid(cell)] = σ_avg[1, 2]
+#     end
+#     return qp_stresses, avg_cell_stresses
+# end
+
 function calculate_stresses(grid, dh, cv, u, C)
     qp_stresses = [
         [zero(SymmetricTensor{2, 2}) for _ in 1:getnquadpoints(cv)]
             for _ in 1:getncells(grid)
     ]
+
     avg_cell_stresses = tuple((zeros(getncells(grid)) for _ in 1:3)...)
+    avg_cell_vonmises = zeros(getncells(grid))
+
     for cell in CellIterator(dh)
         reinit!(cv, cell)
         cell_stresses = qp_stresses[cellid(cell)]
+
         for q_point in 1:getnquadpoints(cv)
             ε = function_symmetric_gradient(cv, q_point, u, celldofs(cell))
             cell_stresses[q_point] = C ⊡ ε
         end
+
         σ_avg = sum(cell_stresses) / getnquadpoints(cv)
+
         avg_cell_stresses[1][cellid(cell)] = σ_avg[1, 1]
         avg_cell_stresses[2][cellid(cell)] = σ_avg[2, 2]
         avg_cell_stresses[3][cellid(cell)] = σ_avg[1, 2]
+
+        avg_cell_vonmises[cellid(cell)] = vonMises(σ_avg)
     end
-    return qp_stresses, avg_cell_stresses
+
+    return qp_stresses, avg_cell_stresses, avg_cell_vonmises
 end
 
 function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
@@ -163,7 +197,7 @@ function solveLinearElasticSteps(E, ν, grid, displacement_prescribed, numSteps)
         U = K \ f_ext
 
         C = get_material_matrix(E, ν)
-        qp_stresses, avg_cell_stresses = calculate_stresses(grid, dh, cell_values, U, C)
+        qp_stresses, avg_cell_stresses, avg_cell_vonmises = calculate_stresses(grid, dh, cell_values, U, C)
 
         # Current deformed configuration
         u_nodes = vec(evaluate_at_grid_nodes(dh, U, :u))
