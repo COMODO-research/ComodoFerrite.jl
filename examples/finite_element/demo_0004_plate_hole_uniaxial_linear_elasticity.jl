@@ -21,7 +21,7 @@ R = ([1, 2],)
 P = (pointSpacing)
 
 F,V,C = regiontrimesh(VT,R,P)
-grid = ComodoToFerrite(F, V, Ferrite.Triangle)
+grid = ComodoToFerrite(F, V)
 addfacetset!(grid, "left", x -> x[1] ≈ -6.0)
 addfacetset!(grid, "right", x -> x[1] ≈ 6.0);
 
@@ -65,11 +65,11 @@ ax2 = Axis(fig_bc[1, 1], aspect=DataAspect(), title="Boundary condition")
 hp2 = poly!(ax2, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=2.0, shading=true, transparency=true)
 
 
-facesset_bcSupportList_XY= get_boundary_points(grid, getfacetset(grid, "left"), Faces, Ferrite.Quadrilateral)
-scatter!(ax2, facesset_bcSupportList_XY, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_XY")
+facesset_bcSupportList_XY= get_boundary_points(grid, getfacetset(grid, "left"))
+scatter!(ax2, facesset_bcSupportList_XY, color=:blue, markersize=15.0, marker=:circle,label="bcSupportList_XY")
 
-facesset_bcPrescribeList_X= get_boundary_points(grid, getfacetset(grid, "right"), Faces, Ferrite.Quadrilateral)
-scatter!(ax2, facesset_bcPrescribeList_X, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribeList_X")
+facesset_bcPrescribeList_X= get_boundary_points(grid, getfacetset(grid, "right"))
+scatter!(ax2, facesset_bcPrescribeList_X, color=:green, markersize=15.0, marker=:circle,label="bcPrescribeList_X")
 
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
 display(GLMakie.Screen(), fig_bc)

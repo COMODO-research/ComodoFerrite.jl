@@ -13,16 +13,16 @@ left = Ferrite.Vec(0.0, 0.0)
 right = Ferrite.Vec(Lx, Ly)
 grid = generate_grid(Ferrite.Quadrilateral, (Nx, Ny), left, right)
 
-F, V   = FerriteToComodo(grid, Ferrite.Quadrilateral)
+F, V   = FerriteToComodo(grid)
 
 GLMakie.closeall()
 
 M = GeometryBasics.Mesh(V, F)
 fig = Figure(size=(800, 600))
 ax = Axis(fig[1, 1], aspect=DataAspect(), xlabel="X", ylabel="Y",title="Mesh with Boundary Conditions")
-poly!(ax, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=1, shading =  true, transparency = false)
+hp1 = meshplot!(ax, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=1, shading =  true, transparency = false)
 
-facesset = get_boundary_points(grid, getfacetset(grid, "top"), Faces, Ferrite.Quadrilateral)
-scatter!(ax, facesset, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label = "Fixed XY")
+facesset = get_boundary_points(grid, getfacetset(grid, "top"))
+scatter!(ax, facesset, color=:blue, markersize=15.0, marker=:circle, label = "Fixed XY")
 
 display(GLMakie.Screen(), fig)

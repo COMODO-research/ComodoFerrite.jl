@@ -19,7 +19,13 @@ pointSpacing = 3.0
 boxDim = [10.0, 40.0, 10.0]
 boxEl = ceil.(Int64, boxDim ./ pointSpacing)
 E, V, F, Fb, Cb = hexbox(boxDim, boxEl)
-grid = ComodoToFerrite(E, V,  Ferrite.Hexahedron; Fb, Cb)
+grid = ComodoToFerrite(E, V)
+
+Fb_back = Fb[Cb.==4]   
+addface!(grid , "back", Fb_back) 
+
+Fb_front = Fb[Cb.==3]  
+addface!(grid , "front", Fb_front) 
 
 ## plot the mesh
 fig_mesh = Figure(size=(800, 800))
@@ -68,11 +74,11 @@ hp2 = meshplot!(ax2, Fb, V, color=(Gray(0.95), 0.3), strokecolor=:black, strokew
 # ylims!(ax2, -22, 22)
 # zlims!(ax2, -8, 8)
 
-facesset_bcSupport = get_boundary_points(grid, getfacetset(grid, "back"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupport, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupport")
+facesset_bcSupport = get_boundary_points(grid, getfacetset(grid, "back"))
+scatter!(ax2, facesset_bcSupport, color=:blue, markersize=15.0, marker=:circle,label="bcSupport")
 
-facesset_bcPrescribe = get_boundary_points(grid, getfacetset(grid, "front"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcPrescribe, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribe")
+facesset_bcPrescribe = get_boundary_points(grid, getfacetset(grid, "front"))
+scatter!(ax2, facesset_bcPrescribe, color=:green, markersize=15.0, marker=:circle,label="bcPrescribe")
 
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
 display(GLMakie.Screen(), fig_bc)

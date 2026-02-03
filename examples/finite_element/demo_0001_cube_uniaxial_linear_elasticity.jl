@@ -19,7 +19,19 @@ GLMakie.closeall()
 boxDim = [10, 10, 10]
 boxEl = [5, 5, 5]
 E, V, F, Fb, Cb = hexbox(boxDim, boxEl)
-grid = ComodoToFerrite(E, V, Ferrite.Hexahedron; Fb, Cb )
+grid = ComodoToFerrite(E, V)
+Fb_bottom = Fb[Cb.==1]
+addface!(grid , "bottom", Fb_bottom) 
+
+Fb_front = Fb[Cb.==3]  
+addface!(grid , "front", Fb_front) 
+
+Fb_top = Fb[Cb.==2] 
+addface!(grid , "top", Fb_top)   
+
+Fb_left = Fb[Cb.==6]
+addface!(grid , "left", Fb_left)   
+
 
 ## plot the mesh
 fig_mesh = Figure(size=(800, 800))
@@ -76,17 +88,17 @@ xlims!(ax2, -6, 6)
 ylims!(ax2, -6, 6)
 zlims!(ax2, -6, 6)
 
-facesset_bcSupportList_Z = get_boundary_points(grid, getfacetset(grid, "bottom"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_Z, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_Z")
+facesset_bcSupportList_Z = get_boundary_points(grid, getfacetset(grid, "bottom"))
+scatter!(ax2, facesset_bcSupportList_Z, color=:blue, markersize=15.0, marker=:circle,label="bcSupportList_Z")
 
-facesset_bcSupportList_Y = get_boundary_points(grid, getfacetset(grid, "front"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_Y, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_Y")
+facesset_bcSupportList_Y = get_boundary_points(grid, getfacetset(grid, "front"))
+scatter!(ax2, facesset_bcSupportList_Y, color=:green, markersize=15.0, marker=:circle,label="bcSupportList_Y")
 
-facesset_bcSupportList_X = get_boundary_points(grid, getfacetset(grid, "left"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcSupportList_X, color=:red, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_X")
+facesset_bcSupportList_X = get_boundary_points(grid, getfacetset(grid, "left"))
+scatter!(ax2, facesset_bcSupportList_X, color=:red, markersize=15.0, marker=:circle,label="bcSupportList_X")
 
-facesset_bcPrescribeList_Z = get_boundary_points(grid, getfacetset(grid, "top"), Faces, Ferrite.Hexahedron)
-scatter!(ax2, facesset_bcPrescribeList_Z, color=:black, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribeList_Z")
+facesset_bcPrescribeList_Z = get_boundary_points(grid, getfacetset(grid, "top"))
+scatter!(ax2, facesset_bcPrescribeList_Z, color=:black, markersize=15.0, marker=:circle,label="bcPrescribeList_Z")
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
 
 

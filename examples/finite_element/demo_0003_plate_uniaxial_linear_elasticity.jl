@@ -20,7 +20,13 @@ plateElem = [10, 10]
 orientation = :up
 F, V, Eb, Cb = quadplate(plateDim, plateElem; orientation = orientation)
 
-grid = ComodoToFerrite(F, V, Ferrite.Quadrilateral; Eb, Cb)
+
+grid = ComodoToFerrite(F, V)
+
+Fb_left = Eb[Cb.==4]
+addface!(grid, "left" , Fb_left)
+Fb_right = Eb[Cb.==2]
+addface!(grid, "right" , Fb_right)
 
 ## plot the mesh
 M = GeometryBasics.Mesh(V, F)
@@ -64,17 +70,17 @@ fig_bc = Figure(size=(800, 800))
 ax2 = Axis(fig_bc[1, 1], title="Boundary condition")
 hp2 = poly!(ax2, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=2.0, shading=true, transparency=true)
 
-ε = 0.05
+
 Lx = plateDim[1]
 Ly = plateDim[2]
-xlims!(ax2, -(Lx + ε), Lx+ ε)
-ylims!(ax2, -(Ly+ ε), Ly+ ε)
+xlims!(ax2, -(Lx + 0.05), Lx+ 0.05)
+ylims!(ax2, -(Ly+ 0.05), Ly+ 0.05)
 
-facesset_bcSupportList_XY= get_boundary_points(grid, getfacetset(grid, "left"), Faces, Ferrite.Quadrilateral)
-scatter!(ax2, facesset_bcSupportList_XY, color=:blue, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcSupportList_XY")
+facesset_bcSupportList_XY= get_boundary_points(grid, getfacetset(grid, "left"))
+scatter!(ax2, facesset_bcSupportList_XY, color=:blue, markersize=15.0, marker=:circle,label="bcSupportList_XY")
 
-facesset_bcPrescribeList_X= get_boundary_points(grid, getfacetset(grid, "right"), Faces, Ferrite.Quadrilateral)
-scatter!(ax2, facesset_bcPrescribeList_X, color=:green, markersize=15.0, marker=:circle, strokecolor=:black, strokewidth=2, label="bcPrescribeList_X")
+facesset_bcPrescribeList_X= get_boundary_points(grid, getfacetset(grid, "right"))
+scatter!(ax2, facesset_bcPrescribeList_X, color=:green, markersize=15.0, marker=:circle,label="bcPrescribeList_X")
 
 axislegend(ax2, position=:rt, backgroundcolor=(:white, 0.7), framecolor=:gray)
 display(GLMakie.Screen(), fig_bc)

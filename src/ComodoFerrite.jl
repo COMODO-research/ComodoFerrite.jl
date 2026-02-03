@@ -6,21 +6,15 @@ using OrderedCollections
 using GeometryBasics
 using GLMakie
 
-struct Faces end
-struct Nodes end
-
-export Faces, Nodes
 export Comodo
-
+export Ferrite
 #################
 
-### ComodoToFerrite
-export create_facetsets
-export create_facetsets_twoD
+export addface!
 export ComodoToFerrite 
 export get_boundary_points
 export faceset_to_cellid_faceid 
-
+export FerriteToComodo
 ### FerriteToComodo functions
 export FerriteToComodo
 
