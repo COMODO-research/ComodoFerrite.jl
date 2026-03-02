@@ -15,7 +15,8 @@ F, V, Eb, Cb = triplate(plateDim1, pointSpacing1; orientation= orientation1, ret
 
 
 grid = ComodoToFerrite(F, V)
-
+Fb_left = Eb[Cb.==4]
+addface!(grid, "left", Fb_left)
 
 GLMakie.closeall()
 
@@ -24,7 +25,7 @@ fig = Figure(size=(800, 600))
 ax = Axis(fig[1, 1], aspect=DataAspect(), xlabel="X", ylabel="Y",title="Mesh with Boundary Conditions")
 poly!(ax, M, color=(Gray(0.95), 0.3), strokecolor=:black, strokewidth=1, shading =  true, transparency = false)
 
-facesset = get_boundary_points(grid, getfacetset(grid, "right"), Faces, Ferrite.Quadrilateral)
+facesset = get_boundary_points(grid, getfacetset(grid, "left"))
 scatter!(ax, facesset, color=:blue, markersize=15.0, marker=:circle, label = "Fixed XY")
 
 display(GLMakie.Screen(), fig)

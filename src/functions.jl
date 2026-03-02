@@ -1,3 +1,8 @@
+"""
+   addface!(grid, name::String, boundary_faces)
+function to add the boundary condition of Comodo to Ferrite facetsets
+
+"""
 function addface!(grid, name::String, boundary_faces)
     # Create dictionaries for all possible face sizes
     face_dicts = Dict{Int, Dict{NTuple, Int}}()
@@ -83,6 +88,11 @@ function ComodoToFerrite(connectivity, V)
     return Grid(cells, nodes)
 end
 
+"""
+get_boundary_points(grid, dataset)
+
+function to get the nodal coordinate of the boundary condition for plotting
+"""
 function get_boundary_points(grid, dataset)
     # Determine dimension from grid nodes
     NodeType = eltype(grid.nodes)
@@ -116,7 +126,9 @@ end
 
 
 """
+FerriteToComodo(grid)
 
+function to conver Ferrite grid to Comodo outputs for plotting
 """
 function FerriteToComodo(grid)
     CellType = eltype(grid.cells)
