@@ -196,3 +196,25 @@ function faceset_to_cellid_faceid(E::Vector{<: AbstractElement{N, T}}, faceIndic
     end
     return face_cell_id, face_id
 end
+
+"""
+    boundary_facets(grid, nodes) -> Vector{FacetIndex}
+
+Return all facets in `grid` whose nodes are entirely contained in `nodes`.
+
+Useful for extracting boundary facets from a set of boundary node IDs,
+e.g. to define a Neumann or Dirichlet boundary condition in Ferrite.
+"""
+function boundary_facets(grid, nodes)
+    allowed = Set(nodes)
+    facets = FacetIndex[]
+    sizehint!(facets, length(grid.cells))
+    for (cell_id, cell) in enumerate(grid.cells)
+        for (facet_id, facet_nodes) in enumerate(Ferrite.facets(cell))
+            if all(n -> n in allowed, facet_nodes)
+                push!(facets, FacetIndex(cell_id, facet_id))
+            end
+        end
+    end
+    return facets
+end

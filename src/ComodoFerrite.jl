@@ -17,7 +17,7 @@ export faceset_to_cellid_faceid
 export FerriteToComodo
 ### FerriteToComodo functions
 export FerriteToComodo
-
+export boundary_facets
 include("functions.jl")
 
 end
