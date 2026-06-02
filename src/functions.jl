@@ -64,11 +64,37 @@ Convert Comodo.jl  mesh to Ferrite grid in Ferrite.jl
 connectivty: for 3D is E and for 2D is F
 
 """
+# function ComodoToFerrite(connectivity, V)
+#     CellType = eltype(connectivity)
+    
+#     FerriteCell = if CellType == Hex8{Int64}
+#         Ferrite.Hexahedron
+#     elseif CellType == Tet4{Int64}
+#         Ferrite.Tetrahedron
+#     elseif CellType == QuadFace{Int64}
+#         Ferrite.Quadrilateral
+#     elseif CellType == TriangleFace{Int64}
+#         Ferrite.Triangle
+#     else
+#         error("Unsupported cell type: $(CellType)")
+#     end
+    
+#     # Determine dimension based on cell type
+#     dim = CellType in (QuadFace{Int64}, TriangleFace{Int64}) ? 2 : 3
+    
+#     cells = [FerriteCell(Tuple(e)) for e in connectivity]
+#     nodes = [Ferrite.Node(ntuple(i -> v[i], dim)) for v in V]
+    
+#     return Grid(cells, nodes)
+# end
+
 function ComodoToFerrite(connectivity, V)
     CellType = eltype(connectivity)
-    
+
     FerriteCell = if CellType == Hex8{Int64}
         Ferrite.Hexahedron
+    elseif CellType == Hex20{Int64}
+        Ferrite.SerendipityQuadraticHexahedron
     elseif CellType == Tet4{Int64}
         Ferrite.Tetrahedron
     elseif CellType == QuadFace{Int64}
@@ -78,14 +104,14 @@ function ComodoToFerrite(connectivity, V)
     else
         error("Unsupported cell type: $(CellType)")
     end
-    
+
     # Determine dimension based on cell type
     dim = CellType in (QuadFace{Int64}, TriangleFace{Int64}) ? 2 : 3
-    
+
     cells = [FerriteCell(Tuple(e)) for e in connectivity]
     nodes = [Ferrite.Node(ntuple(i -> v[i], dim)) for v in V]
-    
-    return Grid(cells, nodes)
+
+    return Ferrite.Grid(cells, nodes)
 end
 
 """
@@ -173,6 +199,7 @@ function FerriteToComodo(grid)
         error("Unsupported cell type: $(CellType). Expected Hexahedron, Tetrahedron, Quadrilateral, or Triangle.")
     end
 end
+
 ###########################################################
 ###########################################################
 function faceset_to_cellid_faceid(E::Vector{<: AbstractElement{N, T}}, faceIndices) where N where T 
